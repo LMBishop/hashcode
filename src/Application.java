@@ -132,7 +132,7 @@ public class Application {
                 Map<Role, Contributor> roles = new LinkedHashMap<>(p.getContributors());
 
                 for (Contributor contributor : contributors) {
-                    if (!contributor.isAssigned()) {
+                    if (!contributor.isAssigned(p.getName())) {
 
                         // for each role needed
                         for (Map.Entry<Role, Contributor> role : p.getContributors().entrySet()) {
@@ -142,11 +142,30 @@ public class Application {
                             }
 
                             // if contributor has skill
-                            if (contributor.getSkills().containsKey(role.getKey().getName())) {
-                                if (contributor.getSkills().get(role.getKey().getName()) >= role.getKey().getLevel()) {
-                                    roles.put(role.getKey(), contributor);
-                                    System.out.println(contributor.getName() + " assigned to " + p.getName());
-                                    contributor.setAssigned(true);
+                            if (contributor.getSkills().containsKey(role.getKey().getName()) && contributor.getSkills().get(role.getKey().getName()) >= role.getKey().getLevel()) {
+                                roles.put(role.getKey(), contributor);
+                                System.out.println(contributor.getName() + " assigned to " + p.getName());
+                                contributor.assign(p.getName());
+                            } else {
+                                if (!contributor.getSkills().containsKey(role.getKey().getName())) {
+                                    contributor.getSkills().put(role.getKey().getName(), 0);
+                                }
+                                if (role.getKey().getLevel() - contributor.getSkills().get(role.getKey().getName()) == 1) {
+                                    // skill too low
+                                    for (Map.Entry<Role, Contributor> otherentry : roles.entrySet()) {
+                                        // unassigned
+                                        if (role.getValue() == null) {
+                                            continue;
+                                        }
+
+                                        if (otherentry.getValue().getSkills().containsKey(role.getKey().getName())
+                                                && (otherentry.getValue().getSkills().get(role.getKey().getName()) >= role.getKey().getLevel())) {
+                                            // mentorship
+                                            roles.put(role.getKey(), contributor);
+                                            System.out.println(contributor.getName() + " assigned to " + p.getName() + " (mentorship)");
+                                            contributor.assign(p.getName());
+                                        }
+                                    }
                                 }
                             }
                         }
@@ -156,21 +175,31 @@ public class Application {
                 p.setContributors(roles);
             }
 
-            boolean projectWorkedOn = false;
-            for (Project p : projects) {
+            ploop: for (Project p : projects) {
                 if (p.hasEnoughContributors() && !p.isComplete()) {
-                    projectWorkedOn = true;
+                    for (Contributor c : p.getContributors().values()) {
+                        if (c.getLockedTo() != null && !c.getLockedTo().equals(p.getName())) {
+                            continue ploop;
+                        }
+                    }
+                    for (Contributor c : p.getContributors().values()) {
+                        System.out.println(c.getName() + " locked to " + p.getName());
+                        c.setLockedTo(p.getName());
+                    }
                     p.setDaysWorked(p.getDaysWorked() + 1);
                     if (p.isComplete()) {
                         completedProjects.add(p);
                         p.setCompletionDay(day);
                         p.setScore(Math.max(0, p.getBestBefore() - p.getCompletionDay() >= 0 ? p.getMaxScore() : p.getMaxScore() - ((p.getCompletionDay() + 1) - p.getBestBefore())));
                         System.out.println(p.getName() + " complete (" + p.getScore() + " points)");
+
                         for (Map.Entry<Role, Contributor> role : p.getContributors().entrySet()) {
-                            role.getValue().setAssigned(false);
-                            if (role.getKey().getLevel() <= role.getValue().getSkills().get(role.getKey().getName())) {
+                            role.getValue().unassign(p.getName());
+                            if (role.getKey().getLevel() >= role.getValue().getSkills().get(role.getKey().getName())) {
                                 role.getValue().getSkills().put(role.getKey().getName(), role.getValue().getSkills().get(role.getKey().getName()) + 1);
+                                System.out.println(role.getValue().getName() + " skill increased in " + role.getKey().getName() + " to " + role.getValue().getSkills().get(role.getKey().getName()));
                             }
+                            role.getValue().setLockedTo(null);
                         }
                     }
                 }
