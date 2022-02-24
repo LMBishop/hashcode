@@ -6,7 +6,7 @@ public class ReadFile {
         File f = new File(name);
         Scanner sc = new Scanner(f);
         while (sc.hasNextLine()) {
-            String data
+            St
         }
     }
 }
