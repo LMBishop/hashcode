@@ -1,57 +1,121 @@
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.*;
 
 public class Application {
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws Exception {
 
         int day = 0;
 
         List<Project> projects = new ArrayList<>();
         List<Contributor> contributors = new ArrayList<>();
 
-        Contributor anna = new Contributor("Anna");
-        Map<String, Integer> annaSkills = new HashMap<>();
-        annaSkills.put("C++", 2);
-        anna.setSkills(annaSkills);
+//        Contributor anna = new Contributor("Anna");
+//        Map<String, Integer> annaSkills = new HashMap<>();
+//        annaSkills.put("C++", 2);
+//        anna.setSkills(annaSkills);
+//
+//        Contributor bob = new Contributor("Bob");
+//        Map<String, Integer> bobSkills = new HashMap<>();
+//        bobSkills.put("HTML", 5);
+//        bobSkills.put("CSS", 5);
+//        bob.setSkills(bobSkills);
+//
+//        Contributor maria = new Contributor("Maria");
+//        Map<String, Integer> mariaSkills = new HashMap<>();
+//        mariaSkills.put("Python", 3);
+//        maria.setSkills(mariaSkills);
+//
+//        contributors.add(anna);
+//        contributors.add(bob);
+//        contributors.add(maria);
 
-        Contributor bob = new Contributor("Bob");
-        Map<String, Integer> bobSkills = new HashMap<>();
-        bobSkills.put("HTML", 5);
-        bobSkills.put("CSS", 5);
-        bob.setSkills(bobSkills);
+//        Project loggingProject = new Project("Logging", 5, 10, 5);
+//        Map<Role, Contributor> loggingProjectContributors = new HashMap<>();
+//        loggingProjectContributors.put(new Role("C++", 3), null);
+//        loggingProject.setContributors(loggingProjectContributors);
+//
+//        Project webprojectProject = new Project("WebServer", 7, 10, 7);
+//        Map<Role, Contributor> webprojectProjectContributors = new HashMap<>();
+//        webprojectProjectContributors.put(new Role("HTML", 3), null);
+//        webprojectProjectContributors.put(new Role("C++", 2), null);
+//        webprojectProject.setContributors(webprojectProjectContributors);
+//
+//        Project webchatProject = new Project("WebChat", 10, 20, 20);
+//        Map<Role, Contributor> webchatProjectContributors = new HashMap<>();
+//        webchatProjectContributors.put(new Role("Python", 3), null);
+//        webchatProjectContributors.put(new Role("HTML", 3), null);
+//        webchatProject.setContributors(webchatProjectContributors);
+//
+//        projects.add(loggingProject);
+//        projects.add(webprojectProject);
+//        projects.add(webchatProject);
 
-        Contributor maria = new Contributor("Maria");
-        Map<String, Integer> mariaSkills = new HashMap<>();
-        mariaSkills.put("Python", 3);
-        maria.setSkills(mariaSkills);
+        int numContribs;
+        int numProjects;
 
-        contributors.add(anna);
-        contributors.add(bob);
-        contributors.add(maria);
+        List<String> lines = Files.readAllLines(Path.of("input.txt"));
+        String[] numParts = lines.get(0).split(" ");
+        numContribs = Integer.parseInt(numParts[0]);
+        numProjects = Integer.parseInt(numParts[1]);
 
-        Project loggingProject = new Project("Logging", 5, 10, 5);
-        Map<Role, Contributor> loggingProjectContributors = new HashMap<>();
-        loggingProjectContributors.put(new Role("C++", 3), null);
-        loggingProject.setContributors(loggingProjectContributors);
+        int curLine = 1;
 
-        Project webprojectProject = new Project("WebServer", 7, 10, 7);
-        Map<Role, Contributor> webprojectProjectContributors = new HashMap<>();
-        webprojectProjectContributors.put(new Role("HTML", 3), null);
-        webprojectProjectContributors.put(new Role("C++", 2), null);
-        webprojectProject.setContributors(webprojectProjectContributors);
+        for (int i = 0; i < numContribs; i++) {
+            String contributorLine = lines.get(curLine);
+            String[] contributorLineParts = contributorLine.split(" ");
+            String name = contributorLineParts[0];
+            int numSkills = Integer.parseInt(contributorLineParts[1]);
+            Contributor contributor = new Contributor(name);
 
-        Project webchatProject = new Project("WebChat", 10, 20, 20);
-        Map<Role, Contributor> webchatProjectContributors = new HashMap<>();
-        webchatProjectContributors.put(new Role("Python", 3), null);
-        webchatProjectContributors.put(new Role("HTML", 3), null);
-        webchatProject.setContributors(webchatProjectContributors);
+            Map<String, Integer> skills = new HashMap<>();
+            for (int j = 0; j < numSkills; j++) {
+                curLine++;
+                String skillLine = lines.get(curLine);
+                String[] skillLineParts = skillLine.split(" ");
+                String skillName = skillLineParts[0];
+                int skillLevel = Integer.parseInt(skillLineParts[1]);
 
-        projects.add(loggingProject);
-        projects.add(webprojectProject);
-        projects.add(webchatProject);
+                skills.put(skillName, skillLevel);
+            }
+
+            contributor.setSkills(skills);
+            contributors.add(contributor);
+
+            curLine++;
+        }
+
+        for (int i = 0; i < numProjects; i++) {
+            String projectLine = lines.get(curLine);
+            String[] projectLineParts = projectLine.split(" ");
+            String name = projectLineParts[0];
+            int duration = Integer.parseInt(projectLineParts[1]);
+            int maxScore = Integer.parseInt(projectLineParts[2]);
+            int bestBefore = Integer.parseInt(projectLineParts[3]);
+            int numSkills = Integer.parseInt(projectLineParts[4]);
+
+            Project project = new Project(name, duration, maxScore, bestBefore);
+
+            Map<Role, Contributor> pContributors = new LinkedHashMap<>();
+            for (int j = 0; j < numSkills; j++) {
+                curLine++;
+                String skillLine = lines.get(curLine);
+                String[] skillLineParts = skillLine.split(" ");
+                String skillName = skillLineParts[0];
+                int skillLevel = Integer.parseInt(skillLineParts[1]);
+
+                pContributors.put(new Role(skillName, skillLevel), null);
+            }
+
+            project.setContributors(pContributors);
+            projects.add(project);
+
+            curLine++;
+        }
+
+        System.out.println(numContribs + " contributors and " + numProjects + " projects");
 
         while (true) {
             System.out.println("DAY " + day);
