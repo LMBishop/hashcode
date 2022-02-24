@@ -29,7 +29,7 @@ public class FileOutput {
 
             for (int i = 0; i < numOfProjects; i++) {
 
-                LinkedHashMap<Role, Contributor> contributors = projects.get(i).getContributors();
+                Map<Role, Contributor> contributors = projects.get(i).getContributors();
                 myWriter.write(projects.get(i).getName() + "\n");
 
                 for (Map.Entry<Role,Contributor> entry : contributors.entrySet()) {

@@ -1,3 +1,4 @@
+import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -11,6 +12,9 @@ public class Application {
 
         List<Project> projects = new ArrayList<>();
         List<Contributor> contributors = new ArrayList<>();
+
+        List<Project> completedProjects = new ArrayList<>();
+
 
 //        Contributor anna = new Contributor("Anna");
 //        Map<String, Integer> annaSkills = new HashMap<>();
@@ -116,6 +120,7 @@ public class Application {
         }
 
         System.out.println(numContribs + " contributors and " + numProjects + " projects");
+        System.out.println("(" + contributors.size() + ", " + projects.size() + ")");
 
         while (true) {
             System.out.println("DAY " + day);
@@ -124,7 +129,7 @@ public class Application {
                     continue;
                 }
 
-                Map<Role, Contributor> roles = new HashMap<>(p.getContributors());
+                Map<Role, Contributor> roles = new LinkedHashMap<>(p.getContributors());
 
                 for (Contributor contributor : contributors) {
                     if (!contributor.isAssigned()) {
@@ -157,6 +162,7 @@ public class Application {
                     projectWorkedOn = true;
                     p.setDaysWorked(p.getDaysWorked() + 1);
                     if (p.isComplete()) {
+                        completedProjects.add(p);
                         p.setCompletionDay(day);
                         p.setScore(Math.max(0, p.getBestBefore() - p.getCompletionDay() >= 0 ? p.getMaxScore() : p.getMaxScore() - ((p.getCompletionDay() + 1) - p.getBestBefore())));
                         System.out.println(p.getName() + " complete (" + p.getScore() + " points)");
@@ -170,7 +176,7 @@ public class Application {
                 }
             }
 
-            if (!projectWorkedOn) {
+            if (completedProjects.size() == projects.size()) {
                 break;
             }
 
@@ -183,6 +189,29 @@ public class Application {
             totalPoints += p.getScore();
         }
         System.out.println("Final score: " + totalPoints);
+
+        try {
+            FileWriter myWriter = new FileWriter("output.txt");
+
+            myWriter.write(numProjects + "\n"); // number of projects
+
+            for (int i = 0; i < completedProjects.size(); i++) {
+
+                Map<Role, Contributor> contributors2 = completedProjects.get(i).getContributors();
+                myWriter.write(completedProjects.get(i).getName() + "\n");
+
+                for (Map.Entry<Role,Contributor> entry : contributors2.entrySet()) {
+                    myWriter.write(entry.getValue().getName() + " ");
+                }
+                myWriter.write("\n");
+            }
+
+            myWriter.close();
+
+        } catch (IOException e) {
+            System.out.println("An error occurred.");
+            e.printStackTrace();
+        }
     }
 
 }
